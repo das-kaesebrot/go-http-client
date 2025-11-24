@@ -91,6 +91,10 @@ func main() {
 
 	var measurements []int64
 
+	if useZeroRtt && *httpVersion == 3 {
+		fmt.Fprint(os.Stderr, "0-RTT enabled\n")
+	}
+
 	if sslKeyLogFilePath != "" {
 		keyLogFileWriter, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
