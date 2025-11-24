@@ -129,7 +129,7 @@ func main() {
 		fmt.Fprintf(outFileWriter, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
 
 		// replace current line and show current iteration
-		fmt.Fprintf(os.Stderr, " [%d/%d] Data: %s (%s)\r", i, *iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
+		fmt.Fprintf(os.Stderr, " \033[0K\r [%d/%d] Data: %s (%s)\r", i, *iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
 
 		measurements = append(measurements, elapsed.Microseconds())
 
