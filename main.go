@@ -64,6 +64,10 @@ func main() {
 	}
 
 	switch *httpVersion {
+	case 1:
+		tr = getHttp1Client(f)
+	case 2:
+		tr = getHttp2Client(f)
 	case 3:
 		tr = getHttp3Client(f)
 	default:
