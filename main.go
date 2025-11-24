@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func getHttp1Client(f io.Writer) http.RoundTripper {
+func getHttp1Client(f io.Writer) *http.Transport {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			KeyLogWriter: f,
@@ -24,7 +24,7 @@ func getHttp1Client(f io.Writer) http.RoundTripper {
 	return tr
 }
 
-func getHttp2Client(f io.Writer) http.RoundTripper {
+func getHttp2Client(f io.Writer) *http2.Transport {
 	tr := &http2.Transport{
 		TLSClientConfig: &tls.Config{
 			NextProtos:   []string{http2.NextProtoTLS},
@@ -34,7 +34,7 @@ func getHttp2Client(f io.Writer) http.RoundTripper {
 	return tr
 }
 
-func getHttp3Client(f io.Writer) http.RoundTripper {
+func getHttp3Client(f io.Writer) *http3.Transport {
 	tr := &http3.Transport{
 		// set a TLS client config, if desired
 		TLSClientConfig: &tls.Config{
