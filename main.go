@@ -95,10 +95,12 @@ func main() {
 			continue
 		}
 
-		io.Copy(io.Discard, resp.Body)
+		writtenBytes, _ := io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 
-		fmt.Printf("%d,%d,%d\n", *httpVersion, i, elapsed.Microseconds())
+		bitrate := float64(writtenBytes*8) / elapsed.Seconds()
+
+		fmt.Printf("%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenBytes, bitrate)
 		measurements = append(measurements, elapsed.Microseconds())
 
 		if closer, ok := tr.(io.Closer); ok {
