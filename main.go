@@ -64,13 +64,14 @@ func main() {
 	iterations := flag.Int("iterations", 1000, "The amount of iterations to run")
 	flag.Parse()
 
-	var f io.Writer = io.Discard
+	var keyLogFileWriter io.Writer = io.Discard
 	var err error
 	var writtenByte int64
 
 	var measurements []int64
 
 	if sslKeyLogFilePath != "" {
+		keyLogFileWriter, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		f, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			panic(err)
@@ -83,11 +84,11 @@ func main() {
 
 		switch *httpVersion {
 		case 1:
-			tr = getHttp1Client(f)
+			tr = getHttp1Client(keyLogFileWriter)
 		case 2:
-			tr = getHttp2Client(f)
+			tr = getHttp2Client(keyLogFileWriter)
 		case 3:
-			tr = getHttp3Client(f)
+			tr = getHttp3Client(keyLogFileWriter)
 		default:
 			log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
 		}
@@ -124,6 +125,10 @@ func main() {
 		if closer, ok := tr.(io.Closer); ok {
 			closer.Close()
 		}
+	}
+
+	if closer, ok := keyLogFileWriter.(io.Closer); ok {
+		closer.Close()
 	}
 
 	mean := getMean(measurements)
