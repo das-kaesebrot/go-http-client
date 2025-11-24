@@ -5,11 +5,21 @@ stages:
 variables:
   BUILD_OUTPUT: out
 
+.go-cache:
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go
+  cache:
+    paths:
+      - .go/pkg/mod/
+
 test:
   stage: test
   image: docker.io/library/golang:alpine
   script:
     - go test
+  extends: .go-cache
 
 build:
   stage: build
@@ -17,9 +27,11 @@ build:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - when: never
-  script:
+  before_script: 
     - mkdir -pv $BUILD_OUTPUT
+  script:
     - go build -o $BUILD_OUTPUT
+  extends: .go-cache
   artifacts:
     when: on_success
     expire_in: "30 days"
