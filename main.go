@@ -47,7 +47,7 @@ func getHttp3Client(f io.Writer) http.RoundTripper {
 
 func main() {
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
-	requestUrl := flag.String("url", "https://http1.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
+	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
 	httpVersion := flag.Int("http", 3, "The HTTP version to use")
 	flag.Parse()
 
