@@ -1,0 +1,27 @@
+stages:
+  - test
+  - build
+
+variables:
+  BUILD_OUTPUT: out
+
+test:
+  stage: test
+  image: docker.io/library/golang:alpine
+  script:
+    - go test
+
+build:
+  stage: build
+  image: docker.io/library/golang:alpine
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: never
+  script:
+    - mkdir -pv $BUILD_OUTPUT
+    - go build -o $BUILD_OUTPUT
+  artifacts:
+    when: on_success
+    expire_in: "30 days"
+    paths:
+      - $BUILD_OUTPUT
