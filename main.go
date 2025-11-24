@@ -61,7 +61,7 @@ func main() {
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
 	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
 	httpVersion := flag.Int("http", 3, "The HTTP version to use")
-	iterations := flag.Int("iterations", 1000, "The amount of iterations to run")
+	iterations := flag.Int("iterations", 10, "The amount of iterations to run")
 	outputFile := flag.String("output", "", "The output file to write to (empty is stdout)")
 
 	flag.Parse()
