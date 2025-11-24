@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -56,6 +57,8 @@ func main() {
 	var f io.Writer = io.Discard
 	var err error
 
+	var measurements []int64
+
 	if sslKeyLogFilePath != "" {
 		f, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
@@ -96,9 +99,18 @@ func main() {
 		resp.Body.Close()
 
 		fmt.Printf("%d,%d,%d\n", *httpVersion, i, elapsed.Microseconds())
+		measurements = append(measurements, elapsed.Microseconds())
 
 		if closer, ok := tr.(io.Closer); ok {
 			closer.Close()
 		}
 	}
+
+	log.Print("### STATS ###")
+	log.Printf("HTTP version: %d\n", *httpVersion)
+	log.Printf("Successful requests: %d/%d\n", len(measurements), *iterations)
+	log.Printf("Mean: %.2f µs\n", getMean(measurements))
+	log.Printf("Median: %.2f µs\n", getMedian(measurements))
+	log.Printf("Min: %d µs\n", slices.Min(measurements))
+	log.Printf("Max: %d µs\n", slices.Max(measurements))
 }
