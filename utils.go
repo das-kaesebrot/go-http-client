@@ -64,9 +64,9 @@ const (
 )
 
 const (
-	precision0 = "%.0f\u00A0%s%s"
-	precision1 = "%.1f\u00A0%s%s"
-	precision2 = "%.2f\u00A0%s%s"
+	precision0 = "%.0f %s%s"
+	precision1 = "%.1f %s%s"
+	precision2 = "%.2f %s%s"
 )
 
 func (n Decimal) Bit() string {
