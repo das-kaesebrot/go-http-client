@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -65,13 +66,8 @@ func main() {
 	switch *httpVersion {
 	case 3:
 		tr = getHttp3Client(f)
-	case 2:
-		tr = getHttp2Client(f)
-	case 1:
-		tr = getHttp1Client(f)
 	default:
-		fmt.Fprintf(os.Stderr, "Invalid HTTP version: %d\n", *httpVersion)
-		os.Exit(1)
+		log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
 	}
 
 	client := &http.Client{
@@ -82,8 +78,7 @@ func main() {
 	_, err = client.Get(*requestUrl)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %v\n", err)
 	}
 
 	elapsed := time.Since(start)
