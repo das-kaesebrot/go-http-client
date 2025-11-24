@@ -88,7 +88,8 @@ func main() {
 		elapsed := time.Since(start)
 
 		if err != nil {
-			log.Fatalf("error: %v\n", err)
+			log.Printf("error: %v\n", err)
+			continue
 		}
 
 		io.Copy(io.Discard, resp.Body)
