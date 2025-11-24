@@ -52,7 +52,7 @@ func main() {
 	httpVersion := flag.Int("http", 3, "The HTTP version to use")
 	flag.Parse()
 
-	var f io.Writer
+	var f io.Writer = io.Discard
 	var tr http.RoundTripper
 	var err error
 
