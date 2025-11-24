@@ -115,6 +115,10 @@ func main() {
 		writtenByte = counter.count
 
 		fmt.Fprintf(os.Stdout, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
+
+		// replace current line and show current iteration
+		fmt.Fprintf(os.Stderr, " [%d/%d] Data: %s (%s)\r", i, *iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
+
 		measurements = append(measurements, elapsed.Microseconds())
 
 		if closer, ok := tr.(io.Closer); ok {
@@ -128,7 +132,7 @@ func main() {
 	log.Print("### STATS ###")
 	log.Printf("HTTP version: %d", *httpVersion)
 	log.Printf("Successful requests: %d/%d", len(measurements), *iterations)
-	log.Printf("Avg bit rate: %s/s", Decimal(bitrate).Bits())
+	log.Printf("Avg bit rate: %s/s", Decimal(bitrate).String("b/s"))
 	log.Printf("Mean: %.2f", mean)
 	log.Printf("Median: %.2f us", getMedian(measurements))
 	log.Printf("Min: %d us", slices.Min(measurements))

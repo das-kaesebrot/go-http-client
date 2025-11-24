@@ -42,6 +42,7 @@ func getMedian(values []int64) float64 {
 
 type (
 	Decimal float64
+	Binary  float64
 )
 
 const (
@@ -54,12 +55,21 @@ const (
 )
 
 const (
+	kib Binary = 1 << 10
+	mib Binary = 1 << 20
+	gib Binary = 1 << 30
+	tib Binary = 1 << 40
+	pib Binary = 1 << 50
+	eib Binary = 1 << 60
+)
+
+const (
 	precision0 = "%.0f\u00A0%s%s"
 	precision1 = "%.1f\u00A0%s%s"
 	precision2 = "%.2f\u00A0%s%s"
 )
 
-func (n Decimal) Bits() string {
+func (n Decimal) Bit() string {
 	return n.String("b")
 }
 
@@ -87,5 +97,32 @@ func (n Decimal) String(unit string) string {
 		return fmt.Sprintf(precision1, f, "k", unit)
 	default:
 		return fmt.Sprintf(precision0, f, "", unit)
+	}
+}
+
+func (n Binary) String(unit string) string {
+	f := n
+	x := Binary(math.Abs(float64(n)))
+	switch {
+	case x >= eib:
+		f /= eib
+		return fmt.Sprintf(precision2, f, "Ei", unit)
+	case x >= pib:
+		f /= pib
+		return fmt.Sprintf(precision2, f, "Pi", unit)
+	case x >= tib:
+		f /= tib
+		return fmt.Sprintf(precision2, f, "Ti", unit)
+	case x >= gib:
+		f /= gib
+		return fmt.Sprintf(precision2, f, "Gi", unit)
+	case x >= mib:
+		f /= mib
+		return fmt.Sprintf(precision2, f, "Mi", unit)
+	case x >= kib:
+		f /= kib
+		return fmt.Sprintf(precision1, f, "ki", unit)
+	default:
+		return fmt.Sprintf(precision0, f, "i", unit)
 	}
 }
