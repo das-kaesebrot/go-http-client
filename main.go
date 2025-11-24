@@ -108,10 +108,14 @@ func main() {
 		}
 	}
 
+	mean := getMean(measurements)
+	bitrate := (float64(writtenByte) * 8) / (mean * 1e-6)
+
 	log.Print("### STATS ###")
 	log.Printf("HTTP version: %d", *httpVersion)
 	log.Printf("Successful requests: %d/%d", len(measurements), *iterations)
-	log.Printf("Mean: %.2f", getMean(measurements))
+	log.Printf("Avg bit rate: %s/s", Decimal(bitrate).Bits())
+	log.Printf("Mean: %.2f", mean)
 	log.Printf("Median: %.2f us", getMedian(measurements))
 	log.Printf("Min: %d us", slices.Min(measurements))
 	log.Printf("Max: %d us", slices.Max(measurements))
