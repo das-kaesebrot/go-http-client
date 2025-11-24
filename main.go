@@ -80,6 +80,7 @@ func main() {
 
 		client := &http.Client{
 			Transport: tr,
+			Timeout:   10 * time.Second,
 		}
 
 		start := time.Now()
