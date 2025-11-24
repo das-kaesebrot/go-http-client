@@ -54,7 +54,6 @@ func main() {
 	flag.Parse()
 
 	var f io.Writer = io.Discard
-	var tr http.RoundTripper
 	var err error
 
 	if sslKeyLogFilePath != "" {
@@ -64,19 +63,21 @@ func main() {
 		}
 	}
 
-	switch *httpVersion {
-	case 1:
-		tr = getHttp1Client(f)
-	case 2:
-		tr = getHttp2Client(f)
-	case 3:
-		tr = getHttp3Client(f)
-	default:
-		log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
-	}
-
 	// yes, we start at 1
 	for i := 1; i <= *iterations; i++ {
+		var tr http.RoundTripper
+
+		switch *httpVersion {
+		case 1:
+			tr = getHttp1Client(f)
+		case 2:
+			tr = getHttp2Client(f)
+		case 3:
+			tr = getHttp3Client(f)
+		default:
+			log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
+		}
+
 		client := &http.Client{
 			Transport: tr,
 		}
