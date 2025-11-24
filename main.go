@@ -16,6 +16,16 @@ import (
 	"golang.org/x/net/http2"
 )
 
+// simple hack
+type CountingWriter struct {
+	count int64
+}
+
+func (cw *CountingWriter) Write(p []byte) (n int, err error) {
+	cw.count += int64(len(p))
+	return len(p), nil
+}
+
 func getHttp1Client(f io.Writer) *http.Transport {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -56,6 +66,7 @@ func main() {
 
 	var f io.Writer = io.Discard
 	var err error
+	var writtenByte int64
 
 	var measurements []int64
 
@@ -81,6 +92,8 @@ func main() {
 			log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
 		}
 
+		buf := make([]byte, 128*1024) // 128KB buffer
+		counter := &CountingWriter{}
 		client := &http.Client{
 			Transport: tr,
 			Timeout:   10 * time.Second,
@@ -88,19 +101,20 @@ func main() {
 
 		start := time.Now()
 		resp, err := client.Get(*requestUrl)
-		elapsed := time.Since(start)
 
 		if err != nil {
 			log.Printf("error: %v\n", err)
 			continue
 		}
 
-		writtenBytes, _ := io.Copy(io.Discard, resp.Body)
+		io.CopyBuffer(counter, resp.Body, buf)
 		resp.Body.Close()
+		elapsed := time.Since(start)
 
-		bitrate := float64(writtenBytes*8) / elapsed.Seconds()
+		bitrate := float64(counter.count*8) / elapsed.Seconds()
+		writtenByte = counter.count
 
-		fmt.Printf("%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenBytes, bitrate)
+		fmt.Fprintf(os.Stdout, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
 		measurements = append(measurements, elapsed.Microseconds())
 
 		if closer, ok := tr.(io.Closer); ok {
