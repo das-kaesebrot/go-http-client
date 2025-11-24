@@ -107,10 +107,10 @@ func main() {
 	}
 
 	log.Print("### STATS ###")
-	log.Printf("HTTP version: %d\n", *httpVersion)
-	log.Printf("Successful requests: %d/%d\n", len(measurements), *iterations)
-	log.Printf("Mean: %.2f µs\n", getMean(measurements))
-	log.Printf("Median: %.2f µs\n", getMedian(measurements))
-	log.Printf("Min: %d µs\n", slices.Min(measurements))
-	log.Printf("Max: %d µs\n", slices.Max(measurements))
+	log.Printf("HTTP version: %d", *httpVersion)
+	log.Printf("Successful requests: %d/%d", len(measurements), *iterations)
+	log.Printf("Mean: %.2f", getMean(measurements))
+	log.Printf("Median: %.2f us", getMedian(measurements))
+	log.Printf("Min: %d us", slices.Min(measurements))
+	log.Printf("Max: %d us", slices.Max(measurements))
 }
