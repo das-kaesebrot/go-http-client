@@ -84,12 +84,16 @@ func main() {
 		}
 
 		start := time.Now()
-		_, err = client.Get(*requestUrl)
+		resp, err := client.Get(*requestUrl)
 		elapsed := time.Since(start)
 
 		if err != nil {
 			log.Fatalf("error: %v\n", err)
 		}
+
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+
 		fmt.Printf("%d,%d,%d\n", *httpVersion, i, elapsed.Microseconds())
 	}
 }
