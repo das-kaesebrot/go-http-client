@@ -62,9 +62,12 @@ func main() {
 	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
 	httpVersion := flag.Int("http", 3, "The HTTP version to use")
 	iterations := flag.Int("iterations", 1000, "The amount of iterations to run")
+	outputFile := flag.String("output", "", "The output file to write to (empty is stdout)")
+
 	flag.Parse()
 
 	var keyLogFileWriter io.Writer = io.Discard
+	var outFileWriter io.WriteCloser = os.Stdout
 	var err error
 	var writtenByte int64
 
@@ -72,11 +75,19 @@ func main() {
 
 	if sslKeyLogFilePath != "" {
 		keyLogFileWriter, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-		f, err = os.OpenFile(sslKeyLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			panic(err)
 		}
 	}
+
+	if *outputFile != "" {
+		outFileWriter, err = os.OpenFile(*outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	defer outFileWriter.Close()
 
 	// yes, we start at 1
 	for i := 1; i <= *iterations; i++ {
@@ -115,7 +126,7 @@ func main() {
 		bitrate := float64(counter.count*8) / elapsed.Seconds()
 		writtenByte = counter.count
 
-		fmt.Fprintf(os.Stdout, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
+		fmt.Fprintf(outFileWriter, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
 
 		// replace current line and show current iteration
 		fmt.Fprintf(os.Stderr, " [%d/%d] Data: %s (%s)\r", i, *iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
