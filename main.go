@@ -49,8 +49,9 @@ func getHttp3Client(f io.Writer) *http3.Transport {
 	tr := &http3.Transport{
 		// set a TLS client config, if desired
 		TLSClientConfig: &tls.Config{
-			NextProtos:   []string{http3.NextProtoH3}, // set the ALPN for HTTP/3
-			KeyLogWriter: f,
+			NextProtos:         []string{http3.NextProtoH3}, // set the ALPN for HTTP/3
+			KeyLogWriter:       f,
+			ClientSessionCache: tls.NewLRUClientSessionCache(100),
 		},
 		QUICConfig: &quic.Config{}, // QUIC connection options
 	}
@@ -71,7 +72,7 @@ func getHttpClient(keyLogFileWriter io.Writer, httpVersion int) (http.RoundTripp
 }
 
 func main() {
-	var keepTransport bool
+	var keepTransport, useZeroRtt bool
 
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
 	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
@@ -79,6 +80,7 @@ func main() {
 	iterations := flag.Int("iterations", 10, "The amount of iterations to run")
 	outputFile := flag.String("output", "", "The output file to write to (empty is stdout)")
 	flag.BoolVar(&keepTransport, "keep", false, "Keep the underlying transport channel open")
+	flag.BoolVar(&useZeroRtt, "zeroRtt", false, "Use 0-RTT for HTTP/3 requests")
 
 	flag.Parse()
 
@@ -137,9 +139,20 @@ func main() {
 
 		buf := make([]byte, 128*1024) // 128KB buffer
 		counter := &CountingWriter{}
+		var req *http.Request
+
+		if *httpVersion == 3 && useZeroRtt {
+			req, err = http.NewRequest(http3.MethodGet0RTT, *requestUrl, nil)
+		} else {
+			req, err = http.NewRequest(http.MethodGet, *requestUrl, nil)
+		}
+
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
 
 		start := time.Now()
-		resp, err := client.Get(*requestUrl)
+		resp, err := client.Do(req)
 
 		if err != nil {
 			log.Printf("error: %v\n", err)
