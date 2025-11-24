@@ -50,6 +50,7 @@ func main() {
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
 	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
 	httpVersion := flag.Int("http", 3, "The HTTP version to use")
+	iterations := flag.Int("iterations", 1000, "The amount of iterations to run")
 	flag.Parse()
 
 	var f io.Writer = io.Discard
@@ -74,17 +75,19 @@ func main() {
 		log.Fatalf("Invalid HTTP version: %d\n", *httpVersion)
 	}
 
-	client := &http.Client{
-		Transport: tr,
+	// yes, we start at 1
+	for i := 1; i <= *iterations; i++ {
+		client := &http.Client{
+			Transport: tr,
+		}
+
+		start := time.Now()
+		_, err = client.Get(*requestUrl)
+		elapsed := time.Since(start)
+
+		if err != nil {
+			log.Fatalf("error: %v\n", err)
+		}
+		fmt.Printf("%d,%d,%d\n", *httpVersion, i, elapsed.Microseconds())
 	}
-
-	start := time.Now()
-	_, err = client.Get(*requestUrl)
-
-	if err != nil {
-		log.Fatalf("error: %v\n", err)
-	}
-
-	elapsed := time.Since(start)
-	fmt.Printf("%d", elapsed.Microseconds())
 }
