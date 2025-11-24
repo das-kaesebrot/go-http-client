@@ -149,7 +149,7 @@ func main() {
 	log.Printf("HTTP version: %d", *httpVersion)
 	log.Printf("Successful requests: %d/%d", len(measurements), *iterations)
 	log.Printf("Avg bit rate: %s/s", Decimal(bitrate).String("b/s"))
-	log.Printf("Mean: %.2f", mean)
+	log.Printf("Mean: %.2f us", mean)
 	log.Printf("Median: %.2f us", getMedian(measurements))
 	log.Printf("Min: %d us", slices.Min(measurements))
 	log.Printf("Max: %d us", slices.Max(measurements))
