@@ -34,6 +34,6 @@ build:
   extends: .go-cache
   artifacts:
     when: on_success
-    expire_in: "30 days"
+    expire_in: "1 hour"
     paths:
       - $BUILD_OUTPUT
