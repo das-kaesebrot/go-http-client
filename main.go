@@ -96,5 +96,9 @@ func main() {
 		resp.Body.Close()
 
 		fmt.Printf("%d,%d,%d\n", *httpVersion, i, elapsed.Microseconds())
+
+		if closer, ok := tr.(io.Closer); ok {
+			closer.Close()
+		}
 	}
 }
