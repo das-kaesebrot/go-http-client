@@ -71,6 +71,14 @@ func getHttpClient(keyLogFileWriter io.Writer, httpVersion int) (http.RoundTripp
 	}
 }
 
+func validateHttpVersion(httpVersion int) error {
+	switch httpVersion {
+	case 1, 2, 3:
+		return nil
+	}
+	return fmt.Errorf("invalid HTTP version: %d", httpVersion)
+}
+
 func main() {
 	var keepTransport, useZeroRtt bool
 	var requestUrl, outputFile string
@@ -99,6 +107,11 @@ func main() {
 	var writtenByte int64
 
 	var measurements []int64
+
+	err = validateHttpVersion(httpVersion)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
 
 	if useZeroRtt && httpVersion == 3 {
 		fmt.Fprint(os.Stderr, "0-RTT enabled\n")
@@ -137,7 +150,7 @@ func main() {
 		fmt.Fprint(os.Stderr, "Destroying transport channel on each iteration\n")
 	}
 
-	fmt.Fprintf(os.Stderr, "Testing against URL '%s'\n", requestUrl)
+	fmt.Fprintf(os.Stderr, "Testing against URL '%s' with HTTP %d\n", requestUrl, httpVersion)
 
 	// yes, we start at 1
 	for i := 1; i <= iterations; i++ {
