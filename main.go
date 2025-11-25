@@ -73,14 +73,23 @@ func getHttpClient(keyLogFileWriter io.Writer, httpVersion int) (http.RoundTripp
 
 func main() {
 	var keepTransport, useZeroRtt bool
+	var requestUrl, outputFile string
+	var httpVersion, iterations int
 
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
-	requestUrl := flag.String("url", "https://http3.streaming.ing.hs-rm.de/content/10mb_of_random.img", "The URL to do a GET request against")
-	httpVersion := flag.Int("http", 3, "The HTTP version to use")
-	iterations := flag.Int("iterations", 10, "The amount of iterations to run")
-	outputFile := flag.String("output", "", "The output file to write to (empty is stdout)")
+
+	flag.StringVar(&requestUrl, "url", "https://www.google.com", "The URL to do a GET request against")
+	flag.StringVar(&requestUrl, "u", "https://www.google.com", "The URL to do a GET request against (shorthand)")
+	flag.IntVar(&httpVersion, "http", 3, "The HTTP version to use")
+	flag.IntVar(&httpVersion, "h", 3, "The HTTP version to use (shorthand)")
+	flag.IntVar(&iterations, "iterations", 10, "The amount of iterations to run")
+	flag.IntVar(&iterations, "i", 10, "The amount of iterations to run (shorthand)")
+	flag.StringVar(&outputFile, "output", "", "The output file to write to (empty is stdout)")
+	flag.StringVar(&outputFile, "o", "", "The output file to write to (empty is stdout) (shorthand)")
 	flag.BoolVar(&keepTransport, "keep", false, "Keep the underlying transport channel open")
+	flag.BoolVar(&keepTransport, "k", false, "Keep the underlying transport channel open")
 	flag.BoolVar(&useZeroRtt, "zeroRtt", false, "Use 0-RTT for HTTP/3 requests")
+	flag.BoolVar(&useZeroRtt, "z", false, "Use 0-RTT for HTTP/3 requests")
 
 	flag.Parse()
 
@@ -91,7 +100,7 @@ func main() {
 
 	var measurements []int64
 
-	if useZeroRtt && *httpVersion == 3 {
+	if useZeroRtt && httpVersion == 3 {
 		fmt.Fprint(os.Stderr, "0-RTT enabled\n")
 	}
 
@@ -102,8 +111,8 @@ func main() {
 		}
 	}
 
-	if *outputFile != "" {
-		outFileWriter, err = os.OpenFile(*outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if outputFile != "" {
+		outFileWriter, err = os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
@@ -116,7 +125,7 @@ func main() {
 
 	if keepTransport {
 		fmt.Fprint(os.Stderr, "Keeping transport channel open\n")
-		tr, err = getHttpClient(keyLogFileWriter, *httpVersion)
+		tr, err = getHttpClient(keyLogFileWriter, httpVersion)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
@@ -129,9 +138,9 @@ func main() {
 	}
 
 	// yes, we start at 1
-	for i := 1; i <= *iterations; i++ {
+	for i := 1; i <= iterations; i++ {
 		if !keepTransport {
-			tr, err = getHttpClient(keyLogFileWriter, *httpVersion)
+			tr, err = getHttpClient(keyLogFileWriter, httpVersion)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
@@ -145,10 +154,10 @@ func main() {
 		counter := &CountingWriter{}
 		var req *http.Request
 
-		if *httpVersion == 3 && useZeroRtt {
-			req, err = http.NewRequest(http3.MethodGet0RTT, *requestUrl, nil)
+		if httpVersion == 3 && useZeroRtt {
+			req, err = http.NewRequest(http3.MethodGet0RTT, requestUrl, nil)
 		} else {
-			req, err = http.NewRequest(http.MethodGet, *requestUrl, nil)
+			req, err = http.NewRequest(http.MethodGet, requestUrl, nil)
 		}
 
 		if err != nil {
@@ -170,10 +179,10 @@ func main() {
 		bitrate := float64(counter.count*8) / elapsed.Seconds()
 		writtenByte = counter.count
 
-		fmt.Fprintf(outFileWriter, "%d,%d,%d,%d,%f\n", *httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
+		fmt.Fprintf(outFileWriter, "%d,%d,%d,%d,%f\n", httpVersion, i, elapsed.Microseconds(), writtenByte, bitrate)
 
 		// replace current line and show current iteration
-		fmt.Fprintf(os.Stderr, " \033[0K\r [%d/%d] Data: %s (%s)\r", i, *iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
+		fmt.Fprintf(os.Stderr, " \033[0K\r [%d/%d] Data: %s (%s)\r", i, iterations, Binary(writtenByte).String("B"), Decimal(bitrate).String("b/s"))
 
 		measurements = append(measurements, elapsed.Microseconds())
 		if !keepTransport {
@@ -196,8 +205,8 @@ func main() {
 	bitrate := (float64(writtenByte) * 8) / (mean * 1e-6)
 
 	fmt.Fprint(os.Stderr, "\033[0K\r### STATS ###\n")
-	fmt.Fprintf(os.Stderr, "HTTP version: %d\n", *httpVersion)
-	fmt.Fprintf(os.Stderr, "Successful requests: %d/%d\n", len(measurements), *iterations)
+	fmt.Fprintf(os.Stderr, "HTTP version: %d\n", httpVersion)
+	fmt.Fprintf(os.Stderr, "Successful requests: %d/%d\n", len(measurements), iterations)
 	fmt.Fprintf(os.Stderr, "Avg bit rate: %s/s\n", Decimal(bitrate).String("b/s"))
 	fmt.Fprintf(os.Stderr, "Mean: %.2f us\n", mean)
 	fmt.Fprintf(os.Stderr, "Median: %.2f us\n", getMedian(measurements))
