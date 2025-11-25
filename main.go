@@ -80,8 +80,8 @@ func main() {
 
 	flag.StringVar(&requestUrl, "url", "https://www.google.com", "The URL to do a GET request against")
 	flag.StringVar(&requestUrl, "u", "https://www.google.com", "The URL to do a GET request against (shorthand)")
-	flag.IntVar(&httpVersion, "http", 3, "The HTTP version to use")
-	flag.IntVar(&httpVersion, "h", 3, "The HTTP version to use (shorthand)")
+	flag.IntVar(&httpVersion, "http", 3, "The HTTP protocol version to use")
+	flag.IntVar(&httpVersion, "p", 3, "The HTTP protocol version to use (shorthand)")
 	flag.IntVar(&iterations, "iterations", 10, "The amount of iterations to run")
 	flag.IntVar(&iterations, "i", 10, "The amount of iterations to run (shorthand)")
 	flag.StringVar(&outputFile, "output", "", "The output file to write to (empty is stdout)")
@@ -136,6 +136,8 @@ func main() {
 	} else {
 		fmt.Fprint(os.Stderr, "Destroying transport channel on each iteration\n")
 	}
+
+	fmt.Fprintf(os.Stderr, "Testing against URL '%s'\n", requestUrl)
 
 	// yes, we start at 1
 	for i := 1; i <= iterations; i++ {
