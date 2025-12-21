@@ -26,46 +26,52 @@ func (cw *CountingWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func getHttp1Client(f io.Writer) *http.Transport {
+func getHttp1Client(f io.Writer, tlsVersion uint16) *http.Transport {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			KeyLogWriter: f,
+			MinVersion:   tlsVersion,
+			MaxVersion:   tlsVersion,
 		},
 	}
 	return tr
 }
 
-func getHttp2Client(f io.Writer) *http2.Transport {
+func getHttp2Client(f io.Writer, tlsVersion uint16) *http2.Transport {
 	tr := &http2.Transport{
 		TLSClientConfig: &tls.Config{
 			NextProtos:   []string{http2.NextProtoTLS},
 			KeyLogWriter: f,
+			MinVersion:   tlsVersion,
+			MaxVersion:   tlsVersion,
 		},
 	}
 	return tr
 }
 
-func getHttp3Client(f io.Writer) *http3.Transport {
+func getHttp3Client(f io.Writer, tlsVersion uint16) *http3.Transport {
 	tr := &http3.Transport{
 		// set a TLS client config, if desired
 		TLSClientConfig: &tls.Config{
 			NextProtos:         []string{http3.NextProtoH3}, // set the ALPN for HTTP/3
 			KeyLogWriter:       f,
 			ClientSessionCache: tls.NewLRUClientSessionCache(100),
+			MinVersion:         tlsVersion,
+			MaxVersion:         tlsVersion,
 		},
 		QUICConfig: &quic.Config{}, // QUIC connection options
 	}
 	return tr
 }
 
-func getHttpClient(keyLogFileWriter io.Writer, httpVersion int) (http.RoundTripper, error) {
+func getHttpClient(keyLogFileWriter io.Writer, httpVersion int, tlsVersion uint16) (http.RoundTripper, error) {
 	switch httpVersion {
 	case 1:
-		return getHttp1Client(keyLogFileWriter), nil
+		return getHttp1Client(keyLogFileWriter, tlsVersion), nil
 	case 2:
-		return getHttp2Client(keyLogFileWriter), nil
+		return getHttp2Client(keyLogFileWriter, tlsVersion), nil
 	case 3:
-		return getHttp3Client(keyLogFileWriter), nil
+		return getHttp3Client(keyLogFileWriter, tlsVersion), nil
 	default:
 		return nil, fmt.Errorf("invalid HTTP version: %d", httpVersion)
 	}
@@ -79,9 +85,26 @@ func validateHttpVersion(httpVersion int) error {
 	return fmt.Errorf("invalid HTTP version: %d", httpVersion)
 }
 
+func validateAndParseTlsVersion(tlsVersion string) (uint16, error) {
+	tlsVersions := map[uint16]string{
+		tls.VersionTLS10: "1.0",
+		tls.VersionTLS11: "1.1",
+		tls.VersionTLS12: "1.2",
+		tls.VersionTLS13: "1.3",
+	}
+
+	for version, versionName := range tlsVersions {
+		if versionName == tlsVersion {
+			return version, nil
+		}
+	}
+
+	return 0, fmt.Errorf("invalid TLS version: %s", tlsVersion)
+}
+
 func main() {
 	var keepTransport, useZeroRtt bool
-	var requestUrl, outputFile string
+	var requestUrl, outputFile, tlsVersion string
 	var httpVersion, iterations int
 
 	sslKeyLogFilePath := os.Getenv("SSLKEYLOGFILE")
@@ -96,8 +119,10 @@ func main() {
 	flag.StringVar(&outputFile, "o", "", "The output file to write to (empty is stdout) (shorthand)")
 	flag.BoolVar(&keepTransport, "keep", false, "Keep the underlying transport channel open")
 	flag.BoolVar(&keepTransport, "k", false, "Keep the underlying transport channel open")
-	flag.BoolVar(&useZeroRtt, "zeroRtt", false, "Use 0-RTT for HTTP/3 requests")
-	flag.BoolVar(&useZeroRtt, "z", false, "Use 0-RTT for HTTP/3 requests")
+	flag.BoolVar(&useZeroRtt, "zeroRtt", false, "Use 0-RTT for TLS 1.3 requests")
+	flag.BoolVar(&useZeroRtt, "z", false, "Use 0-RTT for TLS 1.3 requests")
+	flag.StringVar(&tlsVersion, "tls", "1.3", "The TLS version to use (forced)")
+	flag.StringVar(&tlsVersion, "t", "1.3", "The TLS version to use (forced) (shorthand)")
 
 	flag.Parse()
 
@@ -107,13 +132,18 @@ func main() {
 	var writtenByte int64
 
 	var measurements []int64
+	var parsedTlsVersion uint16
+	parsedTlsVersion, err = validateAndParseTlsVersion(tlsVersion)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
 
 	err = validateHttpVersion(httpVersion)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 
-	if useZeroRtt && httpVersion == 3 {
+	if useZeroRtt && parsedTlsVersion == tls.VersionTLS13 {
 		fmt.Fprint(os.Stderr, "0-RTT enabled\n")
 	}
 
@@ -138,7 +168,7 @@ func main() {
 
 	if keepTransport {
 		fmt.Fprint(os.Stderr, "Keeping transport channel open\n")
-		tr, err = getHttpClient(keyLogFileWriter, httpVersion)
+		tr, err = getHttpClient(keyLogFileWriter, httpVersion, parsedTlsVersion)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
@@ -155,7 +185,7 @@ func main() {
 	// yes, we start at 1
 	for i := 1; i <= iterations; i++ {
 		if !keepTransport {
-			tr, err = getHttpClient(keyLogFileWriter, httpVersion)
+			tr, err = getHttpClient(keyLogFileWriter, httpVersion, parsedTlsVersion)
 			if err != nil {
 				log.Fatalf("error: %v", err)
 			}
