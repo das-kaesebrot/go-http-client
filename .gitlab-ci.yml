@@ -16,14 +16,14 @@ variables:
 
 test:
   stage: test
-  image: docker.io/library/golang:alpine
+  image: docker.io/library/golang:alpine@sha256:ac09a5f469f307e5da71e766b0bd59c9c49ea460a528cc3e6686513d64a6f1fb
   script:
     - go test
   extends: .go-cache
 
 build:
   stage: build
-  image: docker.io/library/golang:alpine
+  image: docker.io/library/golang:alpine@sha256:ac09a5f469f307e5da71e766b0bd59c9c49ea460a528cc3e6686513d64a6f1fb
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - when: never
