@@ -133,6 +133,7 @@ func main() {
 
 	var measurements []int64
 	var parsedTlsVersion uint16
+
 	parsedTlsVersion, err = validateAndParseTlsVersion(tlsVersion)
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -142,6 +143,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+
+	fmt.Fprintf(os.Stderr, "Using TLS %s\n", tlsVersion)
 
 	if useZeroRtt && parsedTlsVersion == tls.VersionTLS13 {
 		fmt.Fprint(os.Stderr, "0-RTT enabled\n")
