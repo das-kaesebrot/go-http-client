@@ -1,4 +1,4 @@
-# `go-http-client`
+# go-http-client
 This is a very simple Go-based HTTP client that supports HTTP/1.1, HTTP/2 and HTTP/3 as well as 0-RTT. I wrote this to be able to benchmark HTTP connections for a project I did at university. Measured data is output in CSV format to `stdout`. General runtime statistics and debug information is printed to `stderr`. Tests are run sequentially.
 
 The TLS version used for the tests is not negotiated and must be set beforehand. The default value is TLS 1.3.
