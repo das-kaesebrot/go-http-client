@@ -3,7 +3,7 @@ module dev.kaesebrot.eu/http-client
 go 1.26.0
 
 require (
-	github.com/quic-go/quic-go v0.64.0
+	github.com/quic-go/quic-go v0.64.1
 	golang.org/x/net v0.61.0
 )
 
